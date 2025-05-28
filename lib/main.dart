@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => LoginScreen(), // Pantalla de Login
         '/home': (context) => HomeScreen(), // Dashboard
-        '/grades': (context) => GradesScreen(), // Calificaciones
+        '/grades': (context) =>  GradesScreen(), // Calificaciones
         '/activities': (context) => ActivitiesScreen(), // Actividades
         '/notebooks': (context) => NotebooksScreen(), // Libretas
       },
