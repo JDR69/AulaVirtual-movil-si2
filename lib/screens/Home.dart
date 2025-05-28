@@ -36,6 +36,13 @@ class HomeScreen extends StatelessWidget {
               label: 'Libretas',
               route: '/notebooks',
             ),
+            // Botón de Perfil de Usuario
+            _buildDashboardButton(
+              context,
+              icon: Icons.person,
+              label: 'Perfil de Usuario',
+              route: '/profile',
+            ),
           ],
         ),
       ),
