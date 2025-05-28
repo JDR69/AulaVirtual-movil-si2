@@ -5,7 +5,7 @@ class NotebooksScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('libretas'),
+        title: Text('Libretas'),
         backgroundColor: Colors.blueGrey[700],
       ),
       body: Center(

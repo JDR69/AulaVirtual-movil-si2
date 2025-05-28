@@ -11,20 +11,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_aula_virtual_app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Login navigation to Dashboard test', (
+    WidgetTester tester,
+  ) async {
+    // Construir la aplicación y mostrar la pantalla inicial (Login).
+    await tester.pumpWidget(MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verificar que la pantalla de Login se muestra.
+    expect(find.text('Usuario'), findsOneWidget);
+    expect(find.text('Contraseña'), findsOneWidget);
+    expect(find.text('Iniciar Sesión'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Ingresar credenciales correctas.
+    await tester.enterText(find.byType(TextField).at(0), 'admin'); // Usuario
+    await tester.enterText(find.byType(TextField).at(1), '1234'); // Contraseña
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Tocar el botón de "Iniciar Sesión".
+    await tester.tap(find.text('Iniciar Sesión'));
+    await tester.pumpAndSettle(); // Esperar a que la navegación termine.
+
+    // Verificar que la pantalla del Dashboard se muestra.
+    expect(find.text('Dashboard - Aula Virtual'), findsOneWidget);
+    expect(find.text('Calificaciones'), findsOneWidget);
+    expect(find.text('Actividades'), findsOneWidget);
+    expect(find.text('Libretas'), findsOneWidget);
   });
 }
