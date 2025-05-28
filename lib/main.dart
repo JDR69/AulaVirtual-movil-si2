@@ -24,13 +24,7 @@ class MyApp extends StatelessWidget {
         '/activities': (context) => ActivitiesScreen(), // Actividades
         '/notebooks': (context) => NotebooksScreen(), // Libretas
         '/profile': (context) => UserProfileScreen(
-          user: UserProfile(
-            name: 'Juan Pérez',
-            gender: 'Masculino',
-            role: 'Estudiante',
-            birthDate: DateTime(2000, 5, 28),
-            phone: '123456789',
-          ),
+          userId: '2', // ID de usuario de ejemplo, puedes cambiarlo según tu lógica),
         ), // Perfil de Usuario
       },
     );
