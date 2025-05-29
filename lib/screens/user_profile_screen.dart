@@ -1,70 +1,143 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/user_profile.dart';
 import '../provider/user_provider.dart';
 
-class UserProfileScreen extends StatefulWidget {
+class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({Key? key}) : super(key: key);
-
-  @override
-  _UserProfileScreenState createState() => _UserProfileScreenState();
-}
-
-class _UserProfileScreenState extends State<UserProfileScreen> {
-  late Future<UserProfile> _profileFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _profileFuture = _loadUserProfile();
-  }
-
-  Future<UserProfile> _loadUserProfile() async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
-    // Obtener los datos del perfil de usuario
-    await userProvider.obtenerPerfilUsuario();
-    
-    // Si no hay datos, lanzar una excepción
-    if (userProvider.perfilUsuario == null) {
-      throw Exception('No se pudieron obtener los datos del usuario');
-    }
-    
-    // Convertir a nuestro modelo UserProfile
-    return UserProfile.fromJson(userProvider.perfilUsuario!);
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Perfil de Usuario'),
+        backgroundColor: Colors.blueGrey[700],
       ),
-      body: FutureBuilder<UserProfile>(
-        future: _profileFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
-            final user = snapshot.data!;
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
+      body: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          // Verificar si tenemos datos de usuario
+          if (!userProvider.isLoggedIn) {
+            return Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Center(
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.blue,
-                      child: Text(
-                        user.nombre.isNotEmpty ? user.nombre[0].toUpperCase() : '?',
-                        style: TextStyle(fontSize: 40, color: Colors.white),
+                  Icon(Icons.error_outline, size: 80, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text('No hay información de usuario disponible',
+                      style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/');
+                    },
+                    child: Text('Volver al Login'),
+                  )
+                ],
+              ),
+            );
+          }
+
+          final userData = userProvider.user!;
+          
+          // Extraer valores con manejo de nulos
+          final String nombre = _normalizeString(userData['nombre'] ?? 'No disponible');
+          final String ci = userData['ci']?.toString() ?? 'No disponible';
+          final String rolNombre = _normalizeString(userProvider.rolNombre);
+          final String correo = userData['correo'] ?? 'No disponible';
+          final String telefono = userData['telefono']?.toString() ?? 'No disponible';
+          final String sexo = userData['sexo'] ?? 'No disponible';
+          final String fechaNacimiento = userData['fecha_nacimiento'] ?? 'No disponible';
+          
+          // Información específica de profesor si está disponible
+          final bool esProfesor = userData['rol_nombre'] == 'Profesor';
+          final Map<String, dynamic>? profesorData = userData['profesor'] is Map ? 
+              Map<String, dynamic>.from(userData['profesor']) : null;
+          final String especialidad = esProfesor && profesorData != null ? 
+              _normalizeString(profesorData['especialidad'] ?? 'No especificada') : '';
+
+          // Obtener la primera letra del nombre para el avatar
+          final String avatarLetter = nombre.isNotEmpty ? nombre[0].toUpperCase() : 'U';
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Avatar y nombre
+                Center(
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Colors.blueGrey[700],
+                        child: Text(
+                          avatarLetter,
+                          style: TextStyle(fontSize: 50, color: Colors.white),
+                        ),
                       ),
+                      SizedBox(height: 16),
+                      Text(
+                        nombre,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        rolNombre,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      if (esProfesor && especialidad.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            "Especialidad: $especialidad",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.blueGrey,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                
+                SizedBox(height: 32),
+                
+                // Información personal
+                Card(
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Información Personal',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueGrey[700],
+                          ),
+                        ),
+                        Divider(),
+                        _buildInfoItem(Icons.badge, 'CI', ci),
+                        _buildInfoItem(Icons.calendar_today, 'Fecha de Nacimiento', fechaNacimiento),
+                        _buildInfoItem(Icons.mail, 'Correo', correo),
+                        _buildInfoItem(Icons.phone, 'Teléfono', telefono),
+                        _buildInfoItem(Icons.person, 'Sexo', _formatSexo(sexo)),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 20),
+                ),
+                
+                SizedBox(height: 16),
+                
+                // Permisos
+                if (userProvider.permisos != null && userProvider.permisos!.isNotEmpty)
                   Card(
                     elevation: 4,
                     child: Padding(
@@ -72,53 +145,106 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildInfoRow('ID:', user.id.toString()),
-                          _buildInfoRow('CI:', user.ci),
-                          _buildInfoRow('Nombre:', user.nombre),
-                          _buildInfoRow('Sexo:', user.sexo),
-                          _buildInfoRow('Teléfono:', user.telefono),
-                          _buildInfoRow('Rol:', user.rolNombre),
-                          
+                          Text(
+                            'Permisos',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueGrey[700],
+                            ),
+                          ),
+                          Divider(),
+                          ...userProvider.permisos!
+                              .where((permiso) => permiso['estado'] == true)
+                              .map((permiso) => _buildPermissionItem(
+                                  _normalizeString(permiso['nombre'] ?? 'Sin nombre'))),
                         ],
                       ),
                     ),
                   ),
-                ],
-              ),
-            );
-          } else {
-            return Center(child: Text('No se encontraron datos'));
-          }
+                
+                SizedBox(height: 24),
+                
+                // Botón de cerrar sesión
+                ElevatedButton(
+                  onPressed: () {
+                    userProvider.logout();
+                    Navigator.pushReplacementNamed(context, '/');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    'Cerrar Sesión',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  // Función para normalizar las cadenas con caracteres especiales mal codificados
+  String _normalizeString(String text) {
+    return text
+        .replaceAll('Ã¡', 'á')
+        .replaceAll('Ã©', 'é')
+        .replaceAll('Ã­', 'í')
+        .replaceAll('Ã³', 'ó')
+        .replaceAll('Ãº', 'ú')
+        .replaceAll('Ã±', 'ñ')
+        .replaceAll('Ã', 'í');
+  }
+
+  // Función para mostrar el sexo de forma más legible
+  String _formatSexo(String sexo) {
+    if (sexo == 'M') return 'Masculino';
+    if (sexo == 'F') return 'Femenino';
+    return sexo;
+  }
+
+  Widget _buildInfoItem(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue[700],
-              ),
-            ),
-          ),
+          Icon(icon, color: Colors.blueGrey),
+          SizedBox(width: 16),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(fontSize: 16),
+                ),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionItem(String permission) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 20),
+          SizedBox(width: 8),
+          Text(permission),
         ],
       ),
     );
