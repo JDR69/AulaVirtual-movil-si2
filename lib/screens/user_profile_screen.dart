@@ -1,36 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/user_profile.dart';
-import '../services/api_service.dart';
+import '../provider/user_provider.dart';
 
 class UserProfileScreen extends StatefulWidget {
-  final String userId;
-
-  UserProfileScreen({required this.userId});
+  const UserProfileScreen({Key? key}) : super(key: key);
 
   @override
   _UserProfileScreenState createState() => _UserProfileScreenState();
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
-  late Future<UserProfile> userProfile;
+  late Future<UserProfile> _profileFuture;
 
   @override
   void initState() {
     super.initState();
-    userProfile = _fetchUserProfile();
+    _profileFuture = _loadUserProfile();
   }
 
-  Future<UserProfile> _fetchUserProfile() async {
-    final apiService = ApiService();
-    final data = await apiService.fetchUserProfile(widget.userId);
-
-    return UserProfile(
-      name: data['name'],
-      gender: data['gender'],
-      role: data['role'],
-      birthDate: DateTime.parse(data['birthDate']),
-      phone: data['phone'],
-    );
+  Future<UserProfile> _loadUserProfile() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    // Obtener los datos del perfil de usuario
+    await userProvider.obtenerPerfilUsuario();
+    
+    // Si no hay datos, lanzar una excepción
+    if (userProvider.perfilUsuario == null) {
+      throw Exception('No se pudieron obtener los datos del usuario');
+    }
+    
+    // Convertir a nuestro modelo UserProfile
+    return UserProfile.fromJson(userProvider.perfilUsuario!);
   }
 
   @override
@@ -40,7 +41,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         title: Text('Perfil de Usuario'),
       ),
       body: FutureBuilder<UserProfile>(
-        future: userProfile,
+        future: _profileFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -53,15 +54,35 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Nombre: ${user.name}', style: TextStyle(fontSize: 18)),
-                  SizedBox(height: 8),
-                  Text('Sexo: ${user.gender}', style: TextStyle(fontSize: 18)),
-                  SizedBox(height: 8),
-                  Text('Rol: ${user.role}', style: TextStyle(fontSize: 18)),
-                  SizedBox(height: 8),
-                  Text('Fecha de Nacimiento: ${user.birthDate.toLocal().toString().split(' ')[0]}', style: TextStyle(fontSize: 18)),
-                  SizedBox(height: 8),
-                  Text('Teléfono: ${user.phone}', style: TextStyle(fontSize: 18)),
+                  Center(
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.blue,
+                      child: Text(
+                        user.nombre.isNotEmpty ? user.nombre[0].toUpperCase() : '?',
+                        style: TextStyle(fontSize: 40, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Card(
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildInfoRow('ID:', user.id.toString()),
+                          _buildInfoRow('CI:', user.ci),
+                          _buildInfoRow('Nombre:', user.nombre),
+                          _buildInfoRow('Sexo:', user.sexo),
+                          _buildInfoRow('Teléfono:', user.telefono),
+                          _buildInfoRow('Rol:', user.rolNombre),
+                          
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -69,6 +90,36 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             return Center(child: Text('No se encontraron datos'));
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue[700],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

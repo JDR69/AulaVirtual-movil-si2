@@ -1,31 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'screens/Login.dart';
 import 'screens/Home.dart';
 import 'screens/Grades.dart';
 import 'screens/Activities.dart';
 import 'screens/Notebooks.dart';
-import 'screens/user_profile_screen.dart'; // Importa la pantalla de perfil
-import 'models/user_profile.dart'; // Importa el modelo de datos del usuario
+import 'screens/user_profile_screen.dart';
+import 'provider/user_provider.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Aula Virtual',
-      initialRoute: '/', // Ruta inicial
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      initialRoute: '/',
       routes: {
-        '/': (context) => LoginScreen(), // Pantalla de Login
-        '/home': (context) => HomeScreen(), // Dashboard
-        '/grades': (context) => GradesScreen(), // Calificaciones
-        '/activities': (context) => ActivitiesScreen(), // Actividades
-        '/notebooks': (context) => NotebooksScreen(), // Libretas
-        '/profile': (context) => UserProfileScreen(
-          userId: '2', // ID de usuario de ejemplo, puedes cambiarlo según tu lógica),
-        ), // Perfil de Usuario
+        '/': (context) => LoginScreen(),
+        '/home': (context) => HomeScreen(),
+        '/grades': (context) => GradesScreen(),
+        '/activities': (context) => ActivitiesScreen(),
+        '/notebooks': (context) => NotebooksScreen(),
+        '/profile': (context) => UserProfileScreen(),
       },
     );
   }
