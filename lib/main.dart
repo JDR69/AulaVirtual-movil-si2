@@ -11,9 +11,7 @@ import 'provider/user_provider.dart';
 void main() {
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
       child: const MyApp(),
     ),
   );
@@ -30,14 +28,14 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      initialRoute: '/',
+      initialRoute: '/login',
       routes: {
-        '/': (context) => LoginScreen(),
+        '/login': (context) => LoginScreen(),
         '/home': (context) => HomeScreen(),
-        '/grades': (context) => GradesScreen(),
         '/activities': (context) => ActivitiesScreen(),
-        '/notebooks': (context) => NotebooksScreen(),
+        '/grades': (context) => GradesScreen(),
         '/profile': (context) => UserProfileScreen(),
+      
       },
     );
   }

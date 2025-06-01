@@ -38,11 +38,12 @@ class _LoginScreenState extends State<LoginScreen> {
           // Verificar estructura de la respuesta
           if (userData.containsKey('usuario')) {
             print("✅ Datos de usuario encontrados en la respuesta");
-
+            final userInfo = userData['usuario'];
+            
             Provider.of<UserProvider>(
               context,
               listen: false,
-            ).setUser(userData['usuario']);
+            ).setUser(userInfo);
 
             if (userData.containsKey('permisos')) {
               print("✅ Permisos encontrados: ${userData['permisos']}");
@@ -187,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       : ElevatedButton(
                           onPressed: _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueGrey[700],
+                            backgroundColor: const Color.fromARGB(255, 3, 172, 250),
                             padding: EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

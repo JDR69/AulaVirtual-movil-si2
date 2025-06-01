@@ -1,6 +1,46 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  Map<String, dynamic>? currentUser;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final userData = await ApiService.obtenerUsuario();
+      
+      // Agregar depuración para ver la estructura exacta de userData
+      print('Datos de usuario obtenidos: $userData');
+      
+      setState(() {
+        currentUser = userData;
+        isLoading = false;
+      });
+      
+      // Verificar el rol directamente después de cargar (corregido de rol_id a rol)
+      if (userData != null) {
+        print('Rol del usuario: ${userData['rol']}');
+        print('Rol nombre: ${userData['rol_nombre']}');
+      }
+    } catch (e) {
+      print('Error cargando datos del usuario: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -8,44 +48,46 @@ class HomeScreen extends StatelessWidget {
         title: Text('Dashboard - Aula Virtual'),
         backgroundColor: Colors.blueGrey[700],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.count(
-          crossAxisCount: 2, // Número de columnas
-          crossAxisSpacing: 16, // Espaciado horizontal
-          mainAxisSpacing: 16, // Espaciado vertical
-          children: [
-            // Botón de Calificaciones
-            _buildDashboardButton(
-              context,
-              icon: Icons.grade,
-              label: 'Calificaciones',
-              route: '/grades',
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: GridView.count(
+                crossAxisCount: 2, // Número de columnas
+                crossAxisSpacing: 16, // Espaciado horizontal
+                mainAxisSpacing: 16, // Espaciado vertical
+                children: [
+                  // Botón de Calificaciones - Ahora siempre va a la misma ruta
+                  _buildDashboardButton(
+                    context,
+                    icon: Icons.grade,
+                    label: 'Calificaciones',
+                    route: '/grades',
+                  ),
+                  // Botón de Actividades
+                  _buildDashboardButton(
+                    context,
+                    icon: Icons.assignment,
+                    label: 'Actividades',
+                    route: '/activities',
+                  ),
+                  // Botón de Libretas
+                  _buildDashboardButton(
+                    context,
+                    icon: Icons.book,
+                    label: 'Libretas',
+                    route: '/notebooks',
+                  ),
+                  // Botón de Perfil de Usuario
+                  _buildDashboardButton(
+                    context,
+                    icon: Icons.person,
+                    label: 'Perfil de Usuario',
+                    route: '/profile',
+                  ),
+                ],
+              ),
             ),
-            // Botón de Actividades
-            _buildDashboardButton(
-              context,
-              icon: Icons.assignment,
-              label: 'Actividades',
-              route: '/activities',
-            ),
-            // Botón de Libretas
-            _buildDashboardButton(
-              context,
-              icon: Icons.book,
-              label: 'Libretas',
-              route: '/notebooks',
-            ),
-            // Botón de Perfil de Usuario
-            _buildDashboardButton(
-              context,
-              icon: Icons.person,
-              label: 'Perfil de Usuario',
-              route: '/profile',
-            ),
-          ],
-        ),
-      ),
     );
   }
 
