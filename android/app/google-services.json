@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "161599788025",
+    "project_id": "flutter-aula-virtual-app",
+    "storage_bucket": "flutter-aula-virtual-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:161599788025:android:ae663a16ca9c9eedcbe328",
+        "android_client_info": {
+          "package_name": "com.example.flutter_aula_virtual_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_rmKhXwN8ais8UTNXe2ycYd9fW0OypNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
