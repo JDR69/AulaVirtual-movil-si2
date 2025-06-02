@@ -9,18 +9,164 @@ import 'screens/user_profile_screen.dart';
 import 'provider/user_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-void main() async {
+// Instancia global para notificaciones locales
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+// Función para manejar notificaciones en segundo plano.
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('Mensaje en segundo plano: ${message.messageId}');
+}
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Inicializar notificaciones locales
+    await _initializeLocalNotifications();
+
+    // Registra la función para mensajes en segundo plano.
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Configurar Firebase Messaging
+    await _setupFirebaseMessaging();
+
+    runApp(
+      MultiProvider(
+        providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+        child: const MyApp(),
+      ),
+    );
+  } catch (e) {
+    print('Error inicializando Firebase: $e');
+    runApp(
+      MultiProvider(
+        providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+        child: const MyApp(),
+      ),
+    );
+  }
+}
+
+Future<void> _initializeLocalNotifications() async {
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
   );
-  runApp(
-    MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
-      child: const MyApp(),
-    ),
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // Crear canal de notificación para Android
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'high_importance_channel',
+    'High Importance Notifications',
+    description: 'This channel is used for important notifications.',
+    importance: Importance.high,
   );
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(channel);
+}
+
+Future<void> _setupFirebaseMessaging() async {
+  try {
+    // Solicita permisos
+    NotificationSettings settings = await FirebaseMessaging.instance
+        .requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+
+    print('Permisos de notificación: ${settings.authorizationStatus}');
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      // Obtener el token FCM actual
+      String? token = await FirebaseMessaging.instance.getToken();
+      print('Token FCM: $token');
+
+      // Escuchar cuando se genere un nuevo token
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        print('Nuevo token FCM: $newToken');
+        _sendTokenToServer(newToken);
+      });
+
+      // Configurar listeners para mensajes en primer plano
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('Mensaje recibido en primer plano: ${message.messageId}');
+        print('Título: ${message.notification?.title}');
+        print('Cuerpo: ${message.notification?.body}');
+
+        // Mostrar notificación local
+        _showForegroundNotification(message);
+      });
+
+      // Configurar listener para cuando se abra la app desde una notificación
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        print('App abierta desde notificación: ${message.messageId}');
+        _handleNotificationTap(message);
+      });
+
+      // Manejar notificación que abrió la app (cuando estaba terminada)
+      RemoteMessage? initialMessage = await FirebaseMessaging.instance
+          .getInitialMessage();
+      if (initialMessage != null) {
+        print(
+          'App abierta desde notificación inicial: ${initialMessage.messageId}',
+        );
+        _handleNotificationTap(initialMessage);
+      }
+    }
+  } catch (e) {
+    print('Error configurando Firebase Messaging: $e');
+  }
+}
+
+void _showForegroundNotification(RemoteMessage message) async {
+  const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails(
+        'high_importance_channel',
+        'High Importance Notifications',
+        channelDescription: 'This channel is used for important notifications.',
+        importance: Importance.high,
+        priority: Priority.high,
+        showWhen: false,
+      );
+
+  const NotificationDetails platformChannelSpecifics = NotificationDetails(
+    android: androidPlatformChannelSpecifics,
+  );
+
+  await flutterLocalNotificationsPlugin.show(
+    message.hashCode,
+    message.notification?.title ?? 'Nueva notificación',
+    message.notification?.body ?? 'Has recibido un nuevo mensaje',
+    platformChannelSpecifics,
+  );
+}
+
+void _handleNotificationTap(RemoteMessage message) {
+  // Manejar la navegación cuando se toca una notificación
+  print('Manejando tap de notificación: ${message.data}');
+}
+
+void _sendTokenToServer(String token) {
+  // Aquí implementarías el envío del token a tu servidor
+  print('Enviando token al servidor: $token');
 }
 
 class MyApp extends StatelessWidget {

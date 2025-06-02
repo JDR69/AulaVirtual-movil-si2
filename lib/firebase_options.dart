@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'flutter-aula-virtual-app.firebasestorage.app',
     measurementId: 'G-CGRK5K0860',
   );
+
 }
