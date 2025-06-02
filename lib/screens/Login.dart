@@ -26,24 +26,20 @@ class _LoginScreenState extends State<LoginScreen> {
         // Debug - Mostrar datos antes de enviar
         print("Intentando login con CI: '$ci' y password: '$password'");
 
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final fcmToken = userProvider.fcmToken ?? '';
         // Llamar al endpoint de login
-        final userData = await ApiService.login(ci, password);
-
-        // Imprimir la respuesta completa para depuración
-        print("Respuesta completa: $userData");
+        final userData = await ApiService.login(ci, password, fcmToken);
 
         if (userData != null) {
-          print("✅ Login exitoso, respuesta: $userData");
+          print("✅ Login exitoso, respuesta");
 
           // Verificar estructura de la respuesta
           if (userData.containsKey('usuario')) {
             print("✅ Datos de usuario encontrados en la respuesta");
             final userInfo = userData['usuario'];
-            
-            Provider.of<UserProvider>(
-              context,
-              listen: false,
-            ).setUser(userInfo);
+
+            Provider.of<UserProvider>(context, listen: false).setUser(userInfo);
 
             if (userData.containsKey('permisos')) {
               print("✅ Permisos encontrados: ${userData['permisos']}");
@@ -188,7 +184,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       : ElevatedButton(
                           onPressed: _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 3, 172, 250),
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              3,
+                              172,
+                              250,
+                            ),
                             padding: EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

@@ -7,6 +7,11 @@ class UserProvider with ChangeNotifier {
   List<dynamic>? _permisos;
   bool _isLoading = false;
 
+  // <-- Nueva propiedad para el Token FCM
+  String? _fcmToken;
+  String? get fcmToken => _fcmToken;
+
+  // Otros getters y propiedades...
   Map<String, dynamic>? get user => _user;
   Map<String, dynamic>? get perfilUsuario => _perfilUsuario;
   List<dynamic>? get permisos => _permisos;
@@ -20,14 +25,19 @@ class UserProvider with ChangeNotifier {
 
   void setUser(Map<String, dynamic> userData) {
     _user = userData;
-    // Guardar en SharedPreferences o similar para persistencia
-    print('Usuario guardado en Provider: $_user');
+
     notifyListeners();
   }
 
   void setPermisos(List<dynamic> permisosData) {
     _permisos = permisosData;
-    print('Permisos guardados en Provider: $_permisos');
+    notifyListeners();
+  }
+
+  // <-- Nuevo método para guardar el Token FCM
+  void setFcmToken(String token) {
+    _fcmToken = token;
+    print('FCM Token guardado en Provider: $_fcmToken');
     notifyListeners();
   }
 
@@ -35,7 +45,7 @@ class UserProvider with ChangeNotifier {
     _user = null;
     _perfilUsuario = null;
     _permisos = null;
-    // Limpiar almacenamiento local
+    _fcmToken = null; // Limpiar token FCM
     notifyListeners();
   }
 

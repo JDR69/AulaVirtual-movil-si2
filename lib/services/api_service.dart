@@ -11,43 +11,44 @@ class ApiService {
   static const Duration requestTimeout = Duration(seconds: 30);
 
   // Método para iniciar sesión - con manejo de errores mejorado
-  static Future<Map<String, dynamic>?> login(String ci, String password) async {
+  static Future<Map<String, dynamic>?> login(
+    String ci,
+    String password,
+    String fcmToken,
+  ) async {
     print('Intentando login con CI: $ci y password: $password');
 
     try {
-      // Construir el cuerpo de la petición exactamente como espera el backend
       final Map<String, dynamic> requestBody = {'ci': ci, 'password': password};
-
       print('Body de petición: ${jsonEncode(requestBody)}');
 
+      // Realizar el login
       final response = await http.post(
         Uri.parse('$baseUrl/api/usuario/login/'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
-
       print('Código de respuesta: ${response.statusCode}');
-      print('Cuerpo de respuesta: ${response.body}');
-
+   
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // Guardar token para futuras peticiones
         if (data.containsKey('access')) {
           token = data['access'];
           print('Token obtenido: $token');
+
+          // Ahora que se tiene un token válido, se envía el fcmToken:
+          await ApiService.guardarNuevoToken(ci, fcmToken);
         } else {
           print('ADVERTENCIA: No se encontró token en la respuesta');
         }
         return data;
       } else {
-        // Imprimir detalles del error
         print(
           'Error en login - Código: ${response.statusCode}, Mensaje: ${response.body}',
         );
         return null;
       }
     } catch (e, stackTrace) {
-      // Capturar la excepción con más detalles
       print('Excepción durante login: $e');
       print('Stack trace: $stackTrace');
       return null;
@@ -70,10 +71,7 @@ class ApiService {
         },
       );
 
-      print(
-        'obtenerUsuario - Código: ${response.statusCode}, Respuesta: ${response.body}',
-      );
-
+   
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
@@ -208,6 +206,38 @@ class ApiService {
     } catch (e) {
       print('Excepción al obtener usuarios: $e');
       return null;
+    }
+  }
+
+  // Método para enviar el TokenFCM y CI al backend
+  static Future<bool> guardarNuevoToken(String ci, String fcmToken) async {
+    print('estoy aqui con el token: $fcmToken y ci: $ci');
+
+    try {
+      final uri = Uri.parse('$baseUrl/api/periodo/guardar-nuevo-token/');
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'ci': ci, 'fcm_token': fcmToken}),
+          )
+          .timeout(requestTimeout);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('TokenFCM guardado con éxito');
+        return true;
+      } else {
+        print(
+          'Error al guardar TokenFCM - Código: ${response.statusCode}, Mensaje: ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Excepción al guardar TokenFCM: $e');
+      return false;
     }
   }
 }

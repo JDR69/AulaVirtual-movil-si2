@@ -36,9 +36,6 @@ Future<void> main() async {
     // Registra la función para mensajes en segundo plano.
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Configurar Firebase Messaging
-    await _setupFirebaseMessaging();
-
     runApp(
       MultiProvider(
         providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
@@ -81,9 +78,8 @@ Future<void> _initializeLocalNotifications() async {
       ?.createNotificationChannel(channel);
 }
 
-Future<void> _setupFirebaseMessaging() async {
+Future<void> _setupFirebaseMessaging(BuildContext context) async {
   try {
-    // Solicita permisos
     NotificationSettings settings = await FirebaseMessaging.instance
         .requestPermission(
           alert: true,
@@ -95,33 +91,31 @@ Future<void> _setupFirebaseMessaging() async {
     print('Permisos de notificación: ${settings.authorizationStatus}');
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      // Obtener el token FCM actual
-      String? token = await FirebaseMessaging.instance.getToken();
-      print('Token FCM: $token');
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+      print('Token FCM: $fcmToken');
 
-      // Escuchar cuando se genere un nuevo token
+      Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).setFcmToken(fcmToken ?? '');
+
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
         print('Nuevo token FCM: $newToken');
         _sendTokenToServer(newToken);
       });
 
-      // Configurar listeners para mensajes en primer plano
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         print('Mensaje recibido en primer plano: ${message.messageId}');
         print('Título: ${message.notification?.title}');
         print('Cuerpo: ${message.notification?.body}');
-
-        // Mostrar notificación local
         _showForegroundNotification(message);
       });
 
-      // Configurar listener para cuando se abra la app desde una notificación
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         print('App abierta desde notificación: ${message.messageId}');
         _handleNotificationTap(message);
       });
 
-      // Manejar notificación que abrió la app (cuando estaba terminada)
       RemoteMessage? initialMessage = await FirebaseMessaging.instance
           .getInitialMessage();
       if (initialMessage != null) {
@@ -169,8 +163,22 @@ void _sendTokenToServer(String token) {
   print('Enviando token al servidor: $token');
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Una vez construido el widget, usamos addPostFrameCallback para tener acceso al context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupFirebaseMessaging(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
