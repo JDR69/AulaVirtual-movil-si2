@@ -1,1 +1,9 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"flutter-aula-virtual-app","appId":"1:161599788025:android:ae663a16ca9c9eedcbe328","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"flutter-aula-virtual-app","configurations":{"android":"1:161599788025:android:ae663a16ca9c9eedcbe328","ios":"1:161599788025:ios:33409f2de7725bcdcbe328","macos":"1:161599788025:ios:33409f2de7725bcdcbe328","web":"1:161599788025:web:402390ffac332388cbe328","windows":"1:161599788025:web:834fd63784a7b5d0cbe328"}}}}}}
+{"flutter":{"platforms":{"android":{"default":{"projectId":"flutter-aula-virtual-app",
+"appId":"1:161599788025:android:ae663a16ca9c9eedcbe328",
+"fileOutput":"android/app/google-services.json"}},
+"dart":{"lib/firebase_options.dart":{"projectId":"flutter-aula-virtual-app",
+"configurations":{"android":"1:161599788025:android:ae663a16ca9c9eedcbe328",
+"ios":"1:161599788025:ios:33409f2de7725bcdcbe328",
+"macos":"1:161599788025:ios:33409f2de7725bcdcbe328",
+"web":"1:161599788025:web:402390ffac332388cbe328",
+"windows":"1:161599788025:web:834fd63784a7b5d0cbe328"}}}}}}
