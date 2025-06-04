@@ -75,8 +75,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildDashboardButton(
                     context,
                     icon: Icons.book,
-                    label: 'Libretas',
-                    route: '/notebooks',
+                    label: 'Licencias',
+                    route: '/licencias',
                   ),
                   // Botón de Perfil de Usuario
                   _buildDashboardButton(

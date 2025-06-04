@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../provider/student_perfomance_provider.dart';
 import '../models/student_performance_model.dart';
+import '../provider/user_provider.dart';
 
 class LibretaIAScreen extends StatefulWidget {
   const LibretaIAScreen({Key? key}) : super(key: key);
@@ -13,38 +14,155 @@ class LibretaIAScreen extends StatefulWidget {
 }
 
 class _LibretaIAScreenState extends State<LibretaIAScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  final List<int> _yearOptions = [1, 2, 3, 4, 5];
-  bool _showSuggestions = false;
+  // Replace year options with academic sessions
+  List<String> availableSessions = [];
+  String? initialSession;
+  String? predictiveSession;
+  bool _isLoadingSessions = true;
 
   @override
   void initState() {
     super.initState();
-    // Cargar estudiantes al iniciar la pantalla
-    Future.microtask(
-      () => Provider.of<StudentPerformanceProvider>(
+    // Load available sessions first
+    _loadAcademicSessions();
+  }
+
+  // Fetch academic sessions from API
+  Future<void> _loadAcademicSessions() async {
+    setState(() {
+      _isLoadingSessions = true;
+    });
+
+    try {
+      final sessions = await Provider.of<StudentPerformanceProvider>(
         context,
         listen: false,
-      ).fetchStudents(),
-    );
+      ).fetchAcademicSessions();
+
+      // Ordenar las sesiones de más reciente a más antigua
+      sessions.sort((a, b) {
+        try {
+          int yearA = int.parse(a);
+          int yearB = int.parse(b);
+          return yearB.compareTo(yearA); // Orden descendente
+        } catch (e) {
+          return 0;
+        }
+      });
+
+      setState(() {
+        availableSessions = sessions;
+
+        // Set default values if sessions available
+        if (sessions.isNotEmpty) {
+          // Usar la gestión más reciente como inicial
+          initialSession = sessions.first;
+
+          // Y la siguiente más reciente como predictiva (o la misma si solo hay una)
+          if (sessions.length > 1) {
+            predictiveSession = sessions[1];
+          } else {
+            predictiveSession = sessions.first;
+          }
+        }
+
+        _isLoadingSessions = false;
+      });
+
+      // Now load user data
+      _loadCurrentUserData();
+    } catch (e) {
+      print('Error loading sessions: $e');
+      setState(() {
+        _isLoadingSessions = false;
+      });
+    }
+  }
+
+  // Load current user's data
+  Future<void> _loadCurrentUserData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    if (userProvider.user != null) {
+      final userId = userProvider.user!['id'].toString();
+
+      if (initialSession != null && predictiveSession != null) {
+        // Intercambiar gestiones si la inicial es mayor que la predictiva
+        if (_compareSessionYears(initialSession!, predictiveSession!) > 0) {
+          String temp = initialSession!;
+          setState(() {
+            initialSession = predictiveSession;
+            predictiveSession = temp;
+          });
+        }
+
+        // Cargar datos del estudiante con el rango de sesiones seleccionado
+        await Provider.of<StudentPerformanceProvider>(
+          context,
+          listen: false,
+        ).fetchStudentDataWithRange(
+          userId,
+          initialSession!,
+          predictiveSession!,
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('LibretaIA Predictiva'),
-        backgroundColor: Colors.indigo[700],
-      ),
-      body: Consumer<StudentPerformanceProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return Center(
-              child: SpinKitDoubleBounce(color: Colors.indigo[700], size: 50.0),
-            );
-          }
+    return Consumer2<UserProvider, StudentPerformanceProvider>(
+      builder: (context, userProvider, performanceProvider, child) {
+        // Check if user is logged in
+        if (userProvider.user == null) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('LibretaIA Predictiva'),
+              backgroundColor: Colors.indigo[700],
+            ),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 80, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text(
+                    'No hay información de usuario disponible',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/');
+                    },
+                    child: Text('Volver al Login'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
-          return SingleChildScrollView(
+        if (performanceProvider.isLoading || _isLoadingSessions) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('LibretaIA Predictiva'),
+              backgroundColor: Colors.indigo[700],
+            ),
+            body: Center(
+              child: SpinKitDoubleBounce(color: Colors.indigo[700], size: 50.0),
+            ),
+          );
+        }
+
+        final userName = userProvider.user!['nombre'] ?? 'Usuario';
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('LibretaIA Predictiva'),
+            backgroundColor: Colors.indigo[700],
+          ),
+          body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -54,38 +172,38 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
 
                 const SizedBox(height: 20),
 
-                // Selector de gestiones
-                buildYearSelector(provider),
+                // User Info Card
+                buildUserInfoCard(userName),
 
                 const SizedBox(height: 20),
 
-                // Buscador de estudiantes
-                buildStudentSearch(provider),
+                // Session Range Selector
+                buildSessionRangeSelector(performanceProvider),
 
                 const SizedBox(height: 20),
 
-                // Si hay un estudiante seleccionado, mostrar selector de materias
-                if (provider.selectedStudent != null)
-                  buildSubjectSelector(provider),
+                // If student data is loaded, show subject selector
+                if (performanceProvider.selectedStudent != null)
+                  buildSubjectSelector(performanceProvider),
 
                 const SizedBox(height: 20),
 
-                // Si hay un estudiante y una materia seleccionados, mostrar gráfico y análisis
-                if (provider.selectedStudent != null &&
-                    provider.selectedSubject.isNotEmpty)
-                  buildPerformanceChart(provider),
+                // If student and subject are selected, show chart and analysis
+                if (performanceProvider.selectedStudent != null &&
+                    performanceProvider.selectedSubject.isNotEmpty)
+                  buildPerformanceChart(performanceProvider),
 
                 const SizedBox(height: 20),
 
-                // Análisis de IA
-                if (provider.selectedStudent != null &&
-                    provider.selectedSubject.isNotEmpty)
-                  buildAIAnalysis(provider),
+                // AI Analysis
+                if (performanceProvider.selectedStudent != null &&
+                    performanceProvider.selectedSubject.isNotEmpty)
+                  buildAIAnalysis(performanceProvider),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -119,7 +237,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Predicción académica anual basada en datos reales',
+            'Predicción académica basada en datos reales',
             style: TextStyle(
               fontSize: 16,
               color: Colors.white,
@@ -132,7 +250,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
     );
   }
 
-  Widget buildYearSelector(StudentPerformanceProvider provider) {
+  Widget buildUserInfoCard(String userName) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -142,62 +260,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Cantidad de gestiones a considerar:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.indigo[700],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.indigo.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButton<int>(
-                value: provider.yearsToConsider,
-                underline: Container(),
-                isExpanded: true,
-                hint: const Text('Seleccione años'),
-                onChanged: (value) {
-                  if (value != null) {
-                    provider.setYearsToConsider(value);
-                    // Si hay un estudiante seleccionado, recargar sus datos
-                    if (provider.selectedStudent != null) {
-                      provider.fetchStudentData(
-                        provider.selectedStudent!.id,
-                        value,
-                      );
-                    }
-                  }
-                },
-                items: _yearOptions
-                    .map(
-                      (year) =>
-                          DropdownMenuItem(value: year, child: Text('$year')),
-                    )
-                    .toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget buildStudentSearch(StudentPerformanceProvider provider) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Buscar Estudiante',
+              'Estudiante',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -205,59 +268,147 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Ej: Juan Pérez',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.indigo[100],
+                  child: Icon(Icons.person, color: Colors.indigo[700]),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.indigo[700]!, width: 2),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    userName,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
                 ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _showSuggestions = value.length >= 3;
-                });
-              },
+              ],
             ),
-            if (_showSuggestions)
-              Container(
-                margin: const EdgeInsets.only(top: 5),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildSessionRangeSelector(StudentPerformanceProvider provider) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Rango de Gestiones a Analizar',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.indigo[700],
+              ),
+            ),
+            const SizedBox(height: 15),
+
+            // Initial Session Selector
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Gestión Inicial:',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
                 ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: provider.students.length,
-                  itemBuilder: (context, index) {
-                    final student = provider.students[index];
-                    if (student.name.toLowerCase().contains(
-                      _searchController.text.toLowerCase(),
-                    )) {
-                      return ListTile(
-                        title: Text(student.name),
-                        onTap: () {
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.indigo.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButton<String>(
+                      value: initialSession,
+                      underline: Container(),
+                      isExpanded: true,
+                      hint: const Text('Seleccione'),
+                      onChanged: (newValue) {
+                        if (newValue != null) {
                           setState(() {
-                            _searchController.text = student.name;
-                            _showSuggestions = false;
+                            initialSession = newValue;
                           });
-                          // Cargar datos del estudiante seleccionado
-                          provider.fetchStudentData(
-                            student.id,
-                            provider.yearsToConsider,
-                          );
-                        },
-                      );
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
+                          _updateDataWithNewRange(provider);
+                        }
+                      },
+                      items: availableSessions
+                          .map(
+                            (session) => DropdownMenuItem<String>(
+                              value: session,
+                              child: Text(session),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Predictive Session Selector
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Gestión Predictiva:',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.indigo.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButton<String>(
+                      value: predictiveSession,
+                      underline: Container(),
+                      isExpanded: true,
+                      hint: const Text('Seleccione'),
+                      onChanged: (newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            predictiveSession = newValue;
+                          });
+                          _updateDataWithNewRange(provider);
+                        }
+                      },
+                      items: availableSessions
+                          .map(
+                            (session) => DropdownMenuItem<String>(
+                              value: session,
+                              child: Text(session),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // Advertencia si el orden está mal
+            if (initialSession != null &&
+                predictiveSession != null &&
+                _compareSessionYears(initialSession!, predictiveSession!) > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  '⚠️ La gestión inicial debe ser anterior a la predictiva',
+                  style: TextStyle(color: Colors.orange[800], fontSize: 12),
                 ),
               ),
           ],
@@ -266,8 +417,58 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
     );
   }
 
+  // Actualiza el método para comparar años
+  int _compareSessionYears(String session1, String session2) {
+    try {
+      int year1 = int.parse(session1);
+      int year2 = int.parse(session2);
+      return year1.compareTo(year2);
+    } catch (e) {
+      print('Error comparando años: $e');
+      return 0;
+    }
+  }
+
+  // Actualiza el método para cargar datos con el nuevo rango
+  void _updateDataWithNewRange(StudentPerformanceProvider provider) {
+    if (initialSession == null || predictiveSession == null) return;
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    if (userProvider.user == null) return;
+
+    final userId = userProvider.user!['id'].toString();
+
+    // Si la gestión inicial es mayor que la predictiva, intercambiarlas
+    if (_compareSessionYears(initialSession!, predictiveSession!) > 0) {
+      setState(() {
+        String temp = initialSession!;
+        initialSession = predictiveSession;
+        predictiveSession = temp;
+      });
+
+      // Mostrar un mensaje al usuario
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Se han intercambiado las gestiones para mantener un orden cronológico',
+          ),
+          backgroundColor: Colors.orange[700],
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+
+    // Cargar datos para el rango seleccionado
+    provider.fetchStudentDataWithRange(
+      userId,
+      initialSession!,
+      predictiveSession!,
+    );
+  }
+
   Widget buildSubjectSelector(StudentPerformanceProvider provider) {
-    // Obtener lista de materias únicas
+    // Get unique subjects
     Set<String> subjects = {};
 
     provider.selectedStudent!.yearlyData.forEach((year, performances) {
@@ -330,7 +531,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
   }
 
   Widget buildPerformanceChart(StudentPerformanceProvider provider) {
-    // Preparar datos para la gráfica - Agrupar por año
+    // Prepare data for chart - Group by year
     Map<String, double> promediosPorAno = {};
 
     provider.selectedStudent!.yearlyData.forEach((year, yearPerformances) {
@@ -341,12 +542,12 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
       }
     });
 
-    // Convertir el mapa a una lista ordenada por año
+    // Sort entries by year
     List<MapEntry<String, double>> datosOrdenados =
         promediosPorAno.entries.toList()
           ..sort((a, b) => a.key.compareTo(b.key));
 
-    // Recopilar rendimientos para calcular predicción
+    // Collect performances for prediction
     List<SubjectPerformance> performances = [];
     datosOrdenados.forEach((entry) {
       performances.add(
@@ -358,11 +559,12 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
       );
     });
 
-    // Calcular predicción si hay suficientes datos
+    // Calculate prediction if enough data
     double? prediccion = provider.predictNextScore(performances);
     String? proximoAno;
 
     if (prediccion != null && datosOrdenados.isNotEmpty) {
+      // For next year prediction
       proximoAno = (int.parse(datosOrdenados.last.key) + 1).toString();
     }
 
@@ -399,7 +601,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
                               getTitlesWidget: (value, meta) {
                                 int index = value.toInt();
 
-                                // Mostrar años existentes
+                                // Show existing years
                                 if (index >= 0 &&
                                     index < datosOrdenados.length) {
                                   return Text(
@@ -412,7 +614,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
                                   );
                                 }
 
-                                // Mostrar año de predicción
+                                // Show prediction year
                                 if (prediccion != null &&
                                     index == datosOrdenados.length) {
                                   return Text(
@@ -462,11 +664,11 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
                             ? datosOrdenados.length.toDouble()
                             : (datosOrdenados.length - 1).toDouble(),
                         minY: 0,
-                        maxY: 100, // Nota máxima es 100
+                        maxY: 100, // Maximum score is 100
                         lineBarsData: [
                           LineChartBarData(
                             spots: [
-                              // Datos reales
+                              // Real data
                               ...List.generate(
                                 datosOrdenados.length,
                                 (index) => FlSpot(
@@ -474,7 +676,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
                                   datosOrdenados[index].value,
                                 ),
                               ),
-                              // Predicción para el próximo año
+                              // Prediction for next year
                               if (prediccion != null)
                                 FlSpot(
                                   datosOrdenados.length.toDouble(),
@@ -502,8 +704,9 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
   }
 
   Widget buildAIAnalysis(StudentPerformanceProvider provider) {
-    // Obtener datos ordenados por año
+    // Get data ordered by year
     Map<String, double> promediosPorAno = {};
+
     provider.selectedStudent!.yearlyData.forEach((year, yearPerformances) {
       for (var performance in yearPerformances) {
         if (performance.subjectName == provider.selectedSubject) {
@@ -516,7 +719,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
         promediosPorAno.entries.toList()
           ..sort((a, b) => a.key.compareTo(b.key));
 
-    // Convertir a formato para predicción
+    // Convert to format for prediction
     List<SubjectPerformance> performances = datosOrdenados
         .map(
           (entry) => SubjectPerformance(
@@ -527,10 +730,10 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
         )
         .toList();
 
-    // Calcular predicción
+    // Calculate prediction
     double? prediccion = provider.predictNextScore(performances);
 
-    // Generar comentario
+    // Generate comment
     String comentario = provider.generateComment(performances);
 
     return Card(
@@ -571,7 +774,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Comentario de análisis
+                // Analysis comment
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -588,7 +791,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
 
                 SizedBox(height: 20),
 
-                // Predicción
+                // Prediction
                 if (prediccion != null && performances.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -620,7 +823,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                prediccion.toString(),
+                                prediccion.toStringAsFixed(2),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -647,7 +850,7 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
 
                 SizedBox(height: 20),
 
-                // Recomendaciones (igual que en la versión web)
+                // Recommendations
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -702,38 +905,9 @@ class _LibretaIAScreenState extends State<LibretaIAScreen> {
       ),
     );
   }
-}
 
-// En StudentPerformanceProvider
-double? predictNextScore(Map<String, double> promediosAnuales) {
-  if (promediosAnuales.length < 2) return null;
-
-  List<double> x = [];
-  List<double> y = [];
-
-  int i = 0;
-  promediosAnuales.entries.toList()
-    ..sort((a, b) => a.key.compareTo(b.key))
-    ..forEach((entry) {
-      x.add(i + 1.0);
-      y.add(entry.value);
-      i++;
-    });
-
-  int n = x.length;
-  double sumX = x.reduce((a, b) => a + b);
-  double sumY = y.reduce((a, b) => a + b);
-  double sumXY = 0;
-  double sumXX = 0;
-
-  for (int i = 0; i < n; i++) {
-    sumXY += x[i] * y[i];
-    sumXX += x[i] * x[i];
+  @override
+  void dispose() {
+    super.dispose();
   }
-
-  double m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-  double b = (sumY - m * sumX) / n;
-  double nextX = n + 1.0;
-
-  return double.parse((m * nextX + b).toStringAsFixed(2));
 }

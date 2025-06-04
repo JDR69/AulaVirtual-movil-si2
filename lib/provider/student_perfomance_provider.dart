@@ -352,4 +352,149 @@ class StudentPerformanceProvider with ChangeNotifier {
       ],
     };
   }
+
+  // Fetch available academic sessions
+  Future<List<String>> fetchAcademicSessions() async {
+    try {
+      final sessions = await ApiService.getAcademicSessions();
+      if (sessions != null && sessions.isNotEmpty) {
+        return sessions
+            .map((session) => session['anio_escolar'].toString())
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching academic sessions: $e');
+      return [];
+    }
+  }
+
+  // Fetch student data with a specific session range
+  Future<void> fetchStudentDataWithRange(
+    String studentId,
+    String initialSession,
+    String predictiveSession,
+  ) async {
+    try {
+      setLoading(true);
+
+      // Primero cargamos todos los datos del estudiante
+      final allSessions = await ApiService.getAcademicSessions();
+
+      if (allSessions == null || allSessions.isEmpty) {
+        throw Exception('No se pudieron cargar las gestiones académicas');
+      }
+
+      // Filtrar solo las sesiones dentro del rango solicitado
+      List<dynamic> filteredSessions = allSessions.where((session) {
+        String yearStr = session['anio_escolar'].toString();
+        int year = int.tryParse(yearStr) ?? 0;
+        int initialYear = int.tryParse(initialSession) ?? 0;
+        int predictiveYear = int.tryParse(predictiveSession) ?? 0;
+
+        return year >= initialYear && year <= predictiveYear;
+      }).toList();
+
+      // Ordenar las sesiones por año (ascendente)
+      filteredSessions.sort((a, b) {
+        int yearA = int.tryParse(a['anio_escolar'].toString()) ?? 0;
+        int yearB = int.tryParse(b['anio_escolar'].toString()) ?? 0;
+        return yearA.compareTo(yearB);
+      });
+
+      // Si no hay sesiones en el rango, mostrar mensaje
+      if (filteredSessions.isEmpty) {
+        _selectedStudent = StudentPerformance(
+          id: studentId,
+          name: 'Estudiante',
+          yearlyData: {},
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Cargar datos de cada sesión filtrada
+      Map<String, List<SubjectPerformance>> yearlyData = {};
+
+      for (var session in filteredSessions) {
+        final sessionYear = session['anio_escolar'].toString();
+        final grades = await ApiService.getStudentGradesBySession(
+          studentId,
+          sessionYear,
+        );
+
+        if (grades != null && grades.isNotEmpty) {
+          // Procesar los datos de notas para esta gestión
+          yearlyData[sessionYear] = _processGradesForYear(grades, sessionYear);
+        }
+      }
+
+      // Buscar nombre del estudiante - usando getAllUsers en lugar de getUserById
+      String studentName = 'Estudiante';
+      try {
+        final usersData = await ApiService.getAllUsers();
+        if (usersData != null) {
+          final matchingUser = usersData.firstWhere(
+            (user) => user['id'].toString() == studentId,
+            orElse: () => {'nombre': 'Estudiante'},
+          );
+
+          if (matchingUser['nombre'] != null) {
+            studentName = _normalizeString(matchingUser['nombre']);
+          }
+        }
+      } catch (e) {
+        print('Error obteniendo nombre del estudiante: $e');
+      }
+
+      _selectedStudent = StudentPerformance(
+        id: studentId,
+        name: studentName,
+        yearlyData: yearlyData,
+      );
+
+      // Limpiar selección de materia anterior si es necesario
+      if (_selectedSubject.isNotEmpty) {
+        // Verificar si la materia anteriormente seleccionada existe en el nuevo rango
+        bool materiaExiste = false;
+        yearlyData.forEach((year, performances) {
+          for (var perf in performances) {
+            if (perf.subjectName == _selectedSubject) {
+              materiaExiste = true;
+              break;
+            }
+          }
+        });
+
+        if (!materiaExiste) {
+          _selectedSubject = '';
+        }
+      }
+
+      setLoading(false);
+    } catch (e) {
+      print('Error cargando datos del estudiante en rango: $e');
+
+      // En caso de error, usar datos de ejemplo
+      _selectedStudent = StudentPerformance(
+        id: studentId,
+        name: 'Estudiante',
+        yearlyData: {},
+      );
+
+      setLoading(false);
+    }
+  }
+
+  // Método auxiliar para modificar el estado de carga
+  void setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
+  }
+
+  // Método auxiliar para establecer el estudiante seleccionado
+  void setSelectedStudent(StudentPerformance student) {
+    _selectedStudent = student;
+    notifyListeners();
+  }
 }

@@ -20,6 +20,96 @@ class ActivitiesScreen extends StatelessWidget {
       'fecha_inicio': '2025-05-08',
       'fecha_entrega': '2025-05-20',
     },
+    {
+      'id': '4',
+      'descripcion': 'Exposición de Literatura',
+      'fecha_inicio': '2025-05-12',
+      'fecha_entrega': '2025-05-25',
+    },
+    {
+      'id': '5',
+      'descripcion': 'Práctico de Laboratorio - Química',
+      'fecha_inicio': '2025-05-15',
+      'fecha_entrega': '2025-05-22',
+    },
+    {
+      'id': '6',
+      'descripcion': 'Informe de Investigación - Biología',
+      'fecha_inicio': '2025-05-18',
+      'fecha_entrega': '2025-06-01',
+    },
+    {
+      'id': '7',
+      'descripcion': 'Debate Grupal - Educación Cívica',
+      'fecha_inicio': '2025-05-20',
+      'fecha_entrega': '2025-05-27',
+    },
+    {
+      'id': '8',
+      'descripcion': 'Proyecto Final - Informática',
+      'fecha_inicio': '2025-05-25',
+      'fecha_entrega': '2025-06-15',
+    },
+    {
+      'id': '9',
+      'descripcion': 'Presentación Oral - Inglés',
+      'fecha_inicio': '2025-05-28',
+      'fecha_entrega': '2025-06-05',
+    },
+    {
+      'id': '10',
+      'descripcion': 'Examen Parcial - Matemáticas',
+      'fecha_inicio': '2025-06-01',
+      'fecha_entrega': '2025-06-01',
+    },
+    {
+      'id': '11',
+      'descripcion': 'Maqueta de Arquitectura - Artes',
+      'fecha_inicio': '2025-06-05',
+      'fecha_entrega': '2025-06-20',
+    },
+    {
+      'id': '12',
+      'descripcion': 'Reporte de Experimento - Física',
+      'fecha_inicio': '2025-06-08',
+      'fecha_entrega': '2025-06-18',
+    },
+    {
+      'id': '13',
+      'descripcion': 'Análisis de Texto - Literatura',
+      'fecha_inicio': '2025-06-10',
+      'fecha_entrega': '2025-06-17',
+    },
+    {
+      'id': '14',
+      'descripcion': 'Investigación de Campo - Geografía',
+      'fecha_inicio': '2025-06-15',
+      'fecha_entrega': '2025-06-29',
+    },
+    {
+      'id': '15',
+      'descripcion': 'Cuestionario en Línea - Historia',
+      'fecha_inicio': '2025-06-18',
+      'fecha_entrega': '2025-06-18',
+    },
+    {
+      'id': '16',
+      'descripcion': 'Taller de Resolución de Problemas - Matemáticas',
+      'fecha_inicio': '2025-06-20',
+      'fecha_entrega': '2025-06-27',
+    },
+    {
+      'id': '17',
+      'descripcion': 'Diseño de Póster Científico - Biología',
+      'fecha_inicio': '2025-06-25',
+      'fecha_entrega': '2025-07-08',
+    },
+    {
+      'id': '18',
+      'descripcion': 'Examen Final - Ciencias Naturales',
+      'fecha_inicio': '2025-07-01',
+      'fecha_entrega': '2025-07-01',
+    },
   ];
 
   @override
@@ -32,8 +122,7 @@ class ActivitiesScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          scrollDirection: Axis
-              .horizontal, // Permite desplazamiento horizontal si es necesario
+          scrollDirection: Axis.horizontal,
           child: DataTable(
             columns: [
               DataColumn(label: Text('ID')),

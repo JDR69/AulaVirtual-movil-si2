@@ -4,7 +4,7 @@ import 'screens/Login.dart';
 import 'screens/Home.dart';
 import 'screens/Grades.dart';
 import 'screens/Activities.dart';
-import 'screens/Notebooks.dart';
+import 'screens/Licencias.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/libreta_ia_screen.dart'; // Nueva pantalla
 import 'provider/user_provider.dart';
@@ -203,8 +203,8 @@ class _MyAppState extends State<MyApp> {
         '/home': (context) => HomeScreen(),
         '/grades': (context) => GradesScreen(),
         '/activities': (context) => ActivitiesScreen(),
-        '/notebooks': (context) => NotebooksScreen(),
-        '/profile': (context) => UserProfileScreen(),
+        '/licencias': (context) => LicenciasScreen(),
+              '/profile': (context) => UserProfileScreen(),
         '/libretaia': (context) => LibretaIAScreen(), // Nueva ruta
       },
     );
