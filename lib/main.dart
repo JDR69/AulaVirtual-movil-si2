@@ -6,7 +6,9 @@ import 'screens/Grades.dart';
 import 'screens/Activities.dart';
 import 'screens/Notebooks.dart';
 import 'screens/user_profile_screen.dart';
+import 'screens/libreta_ia_screen.dart'; // Nueva pantalla
 import 'provider/user_provider.dart';
+import 'provider/student_perfomance_provider.dart'; // Nuevo proveedor
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -38,7 +40,12 @@ Future<void> main() async {
 
     runApp(
       MultiProvider(
-        providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+        providers: [
+          ChangeNotifierProvider(create: (_) => UserProvider()),
+          ChangeNotifierProvider(
+            create: (_) => StudentPerformanceProvider(),
+          ), // Nuevo proveedor
+        ],
         child: const MyApp(),
       ),
     );
@@ -46,7 +53,12 @@ Future<void> main() async {
     print('Error inicializando Firebase: $e');
     runApp(
       MultiProvider(
-        providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+        providers: [
+          ChangeNotifierProvider(create: (_) => UserProvider()),
+          ChangeNotifierProvider(
+            create: (_) => StudentPerformanceProvider(),
+          ), // Nuevo proveedor
+        ],
         child: const MyApp(),
       ),
     );
@@ -184,17 +196,16 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Aula Virtual',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      initialRoute: '/login',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      initialRoute: '/',
       routes: {
-        '/login': (context) => LoginScreen(),
+        '/': (context) => LoginScreen(),
         '/home': (context) => HomeScreen(),
-        '/activities': (context) => ActivitiesScreen(),
         '/grades': (context) => GradesScreen(),
+        '/activities': (context) => ActivitiesScreen(),
+        '/notebooks': (context) => NotebooksScreen(),
         '/profile': (context) => UserProfileScreen(),
+        '/libretaia': (context) => LibretaIAScreen(), // Nueva ruta
       },
     );
   }

@@ -19,15 +19,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUserData() async {
     try {
       final userData = await ApiService.obtenerUsuario();
-      
+
       // Agregar depuración para ver la estructura exacta de userData
       print('Datos de usuario obtenidos: $userData');
-      
+
       setState(() {
         currentUser = userData;
         isLoading = false;
       });
-      
+
       // Verificar el rol directamente después de cargar (corregido de rol_id a rol)
       if (userData != null) {
         print('Rol del usuario: ${userData['rol']}');
@@ -85,9 +85,38 @@ class _HomeScreenState extends State<HomeScreen> {
                     label: 'Perfil de Usuario',
                     route: '/profile',
                   ),
+                  // Nuevo botón de LibretaIA
+                  _buildDashboardButton(
+                    context,
+                    icon: Icons.psychology,
+                    label: 'LibretaIA Predictiva',
+                    route: '/libretaia',
+                  ),
                 ],
               ),
             ),
+      // Ejemplo de DrawerMenu
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blueGrey[700]),
+              child: Text(
+                'Menú',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.psychology),
+              title: Text('LibretaIA Predictiva'),
+              onTap: () {
+                Navigator.pushNamed(context, '/libretaia');
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 

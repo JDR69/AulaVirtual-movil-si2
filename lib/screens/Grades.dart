@@ -1,6 +1,3 @@
-// Modificación a Grades.dart para manejar ambos tipos de usuarios (rol=5 y otros)
-
-// filepath: c:\Users\Usuario\Desktop\UAGRM\Sistemas de Informacion 2 - Angelica\Proyecto Dual 2 - Aula Virtual\Flutter\flutter_aula_virtual_app\lib\screens\Grades.dart
 
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
