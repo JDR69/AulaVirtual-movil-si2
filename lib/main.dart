@@ -7,6 +7,7 @@ import 'screens/Activities.dart';
 import 'screens/Licencias.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/libreta_ia_screen.dart'; // Nueva pantalla
+import 'screens/Notificaciones.dart';
 import 'provider/user_provider.dart';
 import 'provider/student_perfomance_provider.dart'; // Nuevo proveedor
 import 'package:firebase_core/firebase_core.dart';
@@ -165,9 +166,14 @@ void _showForegroundNotification(RemoteMessage message) async {
   );
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void _handleNotificationTap(RemoteMessage message) {
   // Manejar la navegación cuando se toca una notificación
   print('Manejando tap de notificación: ${message.data}');
+
+  // Navegar a la pantalla de notificaciones
+  navigatorKey.currentState?.pushNamed('/notificaciones');
 }
 
 void _sendTokenToServer(String token) {
@@ -195,6 +201,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // Añadir esta línea
       title: 'Aula Virtual',
       theme: ThemeData(primarySwatch: Colors.blue),
       initialRoute: '/',
@@ -204,8 +211,9 @@ class _MyAppState extends State<MyApp> {
         '/grades': (context) => GradesScreen(),
         '/activities': (context) => ActivitiesScreen(),
         '/licencias': (context) => LicenciasScreen(),
-              '/profile': (context) => UserProfileScreen(),
-        '/libretaia': (context) => LibretaIAScreen(), // Nueva ruta
+        '/profile': (context) => UserProfileScreen(),
+        '/libretaia': (context) => LibretaIAScreen(),
+        '/notificaciones': (context) => NotificacionesScreen(),
       },
     );
   }

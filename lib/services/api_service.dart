@@ -29,7 +29,7 @@ class ApiService {
         body: jsonEncode(requestBody),
       );
       print('Código de respuesta: ${response.statusCode}');
-   
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data.containsKey('access')) {
@@ -63,21 +63,41 @@ class ApiService {
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/usuario/obtenerUsuario/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final uri = Uri.parse('$baseUrl/api/usuario/obtenerUsuario/');
+      print('Obteniendo datos del usuario...');
 
-   
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(requestTimeout);
+  if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Verificar que la respuesta contiene los datos necesarios
+        if (data != null && data is Map<String, dynamic>) {
+          if (data.containsKey('id') && data.containsKey('nombre')) {
+            return data;
+          } else {
+            print('ERROR: Respuesta no contiene campos id o nombre');
+            // Si la respuesta no tiene los campos esperados, imprimir todos los campos disponibles
+            print('Campos disponibles: ${data.keys.toList()}');
+            return null;
+          }
+        } else {
+          print('ERROR: Formato de respuesta inesperado');
+          return null;
+        }
+      } else if (response.statusCode == 401) {
+        print('ERROR: Token expirado o inválido');
+        // Aquí podrías implementar una renovación del token o forzar un nuevo login
+        return null;
       } else {
-        print(
-          'Error obtenerUsuario: ${response.statusCode} - ${response.body}',
-        );
+        print('ERROR al obtener usuario - Código: ${response.statusCode}');
         return null;
       }
     } catch (e) {
@@ -238,6 +258,97 @@ class ApiService {
     } catch (e) {
       print('Excepción al guardar TokenFCM: $e');
       return false;
+    }
+  }
+
+  // Método para crear una nueva licencia
+  static Future<Map<String, dynamic>?> crearLicencia({
+    required String descripcion,
+    required String fecha,
+    required String imagen,
+    required int alumno,
+    required String nombreUsuario,
+  }) async {
+    if (token == null) {
+      print('ERROR: No hay token disponible para crear licencia');
+      return null;
+    }
+
+    try {
+      final uri = Uri.parse('$baseUrl/api/periodo/crear-licencia/');
+      final body = {
+        'descripcion': descripcion,
+        'fecha': fecha,
+        'imagen': imagen,
+        'alumno': alumno,
+        'nombre_usuario': nombreUsuario,
+      };
+
+      print('Creando licencia con datos: $body');
+
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(requestTimeout);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Licencia creada con éxito');
+        return jsonDecode(response.body);
+      } else {
+        print(
+          'Error al crear licencia - Código: ${response.statusCode}, Mensaje: ${response.body}',
+        );
+        return null;
+      }
+    } catch (e) {
+      print('Excepción al crear licencia: $e');
+      return null;
+    }
+  }
+
+  // Método para obtener notificaciones del usuario
+  static Future<List<dynamic>?> getNotifications(int userId) async {
+    if (token == null) {
+      print('ERROR: No hay token disponible para obtener notificaciones');
+      return null;
+    }
+
+    try {
+      final uri = Uri.parse('$baseUrl/api/periodo/obtener-notificacion-uni/$userId/');
+
+      print('Solicitando notificaciones para usuario ID: $userId');
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(requestTimeout);
+
+      print('Código de respuesta (notificaciones): ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('Notificaciones obtenidas con éxito: ${data.length} registros');
+        return data;
+      } else {
+        print(
+          'Error al obtener notificaciones - Código: ${response.statusCode}, Mensaje: ${response.body}',
+        );
+        return null;
+      }
+    } catch (e) {
+      print('Excepción al obtener notificaciones: $e');
+      return null;
     }
   }
 }
