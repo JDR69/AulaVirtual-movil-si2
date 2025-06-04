@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Provider.of<UserProvider>(context, listen: false).setUser(userInfo);
 
             if (userData.containsKey('permisos')) {
-              print("✅ Permisos encontrados: ${userData['permisos']}");
+              print("✅ Permisos encontrados");
               Provider.of<UserProvider>(
                 context,
                 listen: false,

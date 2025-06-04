@@ -1,0 +1,475 @@
+/* General Container */
+.libreta-ia {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f5f5f5, #e8eaf6);
+  border-radius: 15px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  overflow-x: hidden; /* Evita que el contenido se desborde horizontalmente */
+}
+
+/* Header Styling */
+.libreta-ia .header h1 {
+  font-size: 3rem;
+  color: #283593;
+  margin-bottom: 1rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.libreta-ia .header p {
+  font-size: 1.5rem;
+  color: #5c6bc0;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Input Group Styling */
+.buscador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.buscador input {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid #c5cae9;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.buscador input:focus {
+  border-color: #3949ab;
+  box-shadow: 0 0 8px rgba(57, 73, 171, 0.5);
+  outline: none;
+}
+
+.buscador button {
+  background-color: #3949ab;
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buscador button:hover {
+  background-color: #1a237e;
+  box-shadow: 0 6px 12px rgba(26, 35, 126, 0.3);
+  transform: scale(1.05);
+}
+
+/* Resumen Académico */
+.resumen-general {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.tarjeta-resumen,
+.tarjeta-riesgo {
+  flex: 1;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.tarjeta-resumen .header-resumen,
+.tarjeta-riesgo .header-riesgo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tarjeta-resumen .header-resumen h3,
+.tarjeta-riesgo .header-riesgo h3 {
+  font-size: 1.5rem;
+  color: #283593;
+}
+
+.tarjeta-resumen .contenido-resumen div,
+.tarjeta-riesgo .contenido-riesgo div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.tarjeta-riesgo {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tarjeta-riesgo .header-riesgo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tarjeta-riesgo .header-riesgo h3 {
+  font-size: 1.5rem;
+  color: #283593;
+}
+
+.tarjeta-riesgo .contenido-riesgo div {
+  margin-bottom: 1rem;
+}
+
+.tarjeta-riesgo .contenido-riesgo ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.tarjeta-riesgo.bajo {
+  background-color: #c6f6d5;
+  color: #22543d;
+}
+
+.tarjeta-riesgo.medio {
+  background-color: #fefcbf;
+  color: #744210;
+}
+
+.tarjeta-riesgo.alto {
+  background-color: #fed7d7;
+  color: #742a2a;
+}
+
+/* Table Styling */
+.table-container {
+  overflow-x: auto; /* Activa el desplazamiento horizontal */
+  margin-top: 2rem;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  background: #f3f4f6;
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 600px; /* Asegura que la tabla tenga un ancho mínimo */
+}
+
+.table-container table th,
+.table-container table td {
+  padding: 1.2rem;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.table-container table th {
+  background-color: #3949ab;
+  color: white;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.table-container table tbody tr:nth-child(even) {
+  background-color: #e8eaf6;
+}
+
+.table-container table tbody tr:hover {
+  background-color: rgba(57, 73, 171, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.table-container table td {
+  color: #424242;
+}
+
+/* Selector de Materias */
+.materias-selector {
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.materias-selector label {
+  font-size: 1.2rem;
+  color: #283593;
+}
+
+.materias-selector select {
+  padding: 0.8rem;
+  border: 2px solid #c5cae9;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.materias-selector select:focus {
+  border-color: #3949ab;
+  box-shadow: 0 0 8px rgba(57, 73, 171, 0.5);
+  outline: none;
+}
+
+/* Selector de Materias y Gestiones */
+.materias-gestiones-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin: 1.5rem 0;
+  align-items: flex-end;
+}
+
+.materias-selector,
+.gestiones-selector {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.materias-selector label,
+.gestiones-selector label {
+  font-size: 1.2rem;
+  color: #283593;
+  font-weight: bold;
+}
+
+.materias-selector select,
+.gestiones-selector input {
+  padding: 0.8rem;
+  border: 2px solid #c5cae9;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.materias-selector select:focus,
+.gestiones-selector input:focus {
+  border-color: #3949ab;
+  box-shadow: 0 0 8px rgba(57, 73, 171, 0.5);
+  outline: none;
+}
+
+.gestiones-selector input {
+  max-width: 100px;
+  text-align: center;
+}
+
+/* Gráfica */
+.grafica-container {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.grafica-container h3 {
+  font-size: 1.5rem;
+  color: #283593;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Estilo para el comentario de desempeño */
+.comentario-desempeno {
+  margin-top: 2rem;
+  animation: fadeIn 0.5s ease;
+}
+
+.comentario-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #e0e7ff;
+}
+
+.comentario-header {
+  background: linear-gradient(135deg, #3949ab, #283593);
+  color: white;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.comentario-header h4 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+.comentario-contenido {
+  padding: 1.5rem;
+}
+
+.comentario-texto {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #3949ab;
+  padding-left: 1rem;
+}
+
+.prediccion-container {
+  background-color: #f0f4ff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.prediccion-container h5 {
+  color: #3949ab;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.prediccion-valor {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.prediccion-valor .badge {
+  background-color: #3949ab;
+  color: white;
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.prediccion-valor .tendencia {
+  font-size: 1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.recomendacion-container {
+  background-color: #ebf4ff;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.recomendacion-container h5 {
+  color: #3949ab;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.recomendacion-lista {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.recomendacion-lista li {
+  margin-bottom: 0.5rem;
+  color: #444;
+  font-size: 1rem;
+}
+
+.recomendacion-lista li:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .libreta-ia {
+    padding: 1rem;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .header p {
+    font-size: 1.2rem;
+  }
+
+  .buscador {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .buscador input {
+    width: 100%;
+  }
+
+  .buscador button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .table-container table {
+    font-size: 0.9rem;
+  }
+
+  .table-container table th,
+  .table-container table td {
+    padding: 0.8rem;
+  }
+
+  .materias-gestiones-selector {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .gestiones-selector input {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .header p {
+    font-size: 1rem;
+  }
+
+  .buscador input {
+    font-size: 0.9rem;
+  }
+
+  .buscador button {
+    font-size: 1rem;
+  }
+
+  .table-container table {
+    font-size: 0.8rem;
+  }
+
+  .table-container table th,
+  .table-container table td {
+    padding: 0.6rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
